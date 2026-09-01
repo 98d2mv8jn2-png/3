@@ -36,7 +36,7 @@
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang TC", "Microsoft JhengHei", "微軟正黑體", sans-serif;
             background-color: var(--bg);
             color: var(--text);
             display: flex;
@@ -101,6 +101,7 @@
         .range-inputs input { width: 50%; }
         .total-hint { font-size: 0.85rem; color: var(--primary); font-weight: 600; margin-top: 0.4rem; text-align: right; }
         
+        /* 標準按鈕規格 */
         .btn {
             display: inline-flex;
             justify-content: center;
@@ -125,6 +126,33 @@
         .btn-success { background-color: var(--success); color: #fff; }
         .btn-purple { background-color: var(--purple); color: #fff; }
         .btn-danger { background-color: var(--danger); color: #fff; }
+        
+        /* 重新設計的精緻偷看按鈕：水平並排、大小適中 */
+        .btn-peek {
+            background-color: #fef3c7;
+            color: #b45309;
+            border: 1px solid #fde68a;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 0.7rem 1rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+            flex: 1;
+            transition: all 0.2s;
+        }
+        .btn-peek:hover {
+            background-color: #fde68a;
+        }
+        body.dark-mode .btn-peek {
+            background-color: #292524;
+            color: #fcd34d;
+            border-color: #78350f;
+        }
+
         .btn-text-sm {
             background: none;
             border: none;
@@ -187,6 +215,23 @@
         .feedback.correct { background-color: #dcfce7; border: 1px solid #bbf7d0; color: var(--success); }
         .feedback.wrong { background-color: #fee2e2; border: 1px solid #fecaca; color: var(--danger); }
         .feedback-title { font-weight: bold; font-size: 1rem; margin-bottom: 0.4rem; }
+        
+        /* 偷看答案面板 */
+        .peek-box {
+            margin-top: 1rem;
+            padding: 0.9rem 1rem;
+            background-color: #f8fafc;
+            border: 1.5px dashed var(--warning);
+            border-radius: 8px;
+            color: var(--text);
+        }
+        body.dark-mode .peek-box {
+            background-color: #1e293b;
+            border-color: #d97706;
+        }
+        .peek-title { font-weight: 700; font-size: 0.9rem; color: var(--warning); margin-bottom: 0.3rem; display: flex; align-items: center; gap: 0.3rem; }
+        .peek-content { font-size: 0.92rem; line-height: 1.6; word-break: break-all; white-space: pre-wrap; color: var(--text); }
+
         .diff-view { background: var(--card-bg); border: 1px solid var(--border); padding: 0.75rem; border-radius: 4px; margin-top: 0.5rem; font-size: 0.92rem; line-height: 1.6; word-break: break-all; }
         
         .card-stage {
@@ -413,9 +458,9 @@
             <button class="btn btn-secondary no-print" onclick="window.print()" style="width:auto; padding:0.4rem 0.8rem; font-size:0.85rem;">🖨️ 列印此清單</button>
         </div>
         <div class="filter-tabs no-print">
-            <button class="filter-tab active" id="tab-all" onclick="switchBankFilter('all')">全部 (90)</button>
-            <button class="filter-tab" id="tab-unmastered" onclick="switchBankFilter('unmastered')">未熟記</button>
-            <button class="filter-tab" id="tab-mastered" onclick="switchBankFilter('mastered')">已熟記</button>
+            <button class="filter-tab active" id="tab-all" onclick="switchBankFilter('all')">全部 (<span id="count-bank-all">90</span>)</button>
+            <button class="filter-tab" id="tab-unmastered" onclick="switchBankFilter('unmastered')">未熟記 (<span id="count-bank-unmastered">0</span>)</button>
+            <button class="filter-tab" id="tab-mastered" onclick="switchBankFilter('mastered')">已熟記 (<span id="count-bank-mastered">0</span>)</button>
         </div>
         <div id="mastered-list-container" class="mastered-list"></div>
         <button class="btn btn-secondary no-print" id="btn-hide-mastered" type="button" style="margin-top: 1rem;">返回主頁</button>
@@ -437,23 +482,39 @@
         <div class="question-box" id="quiz-question"></div>
         <textarea id="quiz-answer" placeholder="請輸入答案..." oninput="saveCurrentDraft(this.value)"></textarea>
         
-        <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
-            <button class="btn btn-secondary" id="btn-prev" style="width: auto; min-width: 95px;">⬅️ 上一題</button>
-            <button class="btn btn-skip hidden" id="btn-skip">⏭️ 熟記跳過</button>
-            <button class="btn" id="btn-submit">提交答案</button>
-            <button class="btn btn-success hidden" id="btn-next">下一題 ➡️</button>
+        <!-- 手機友善、整齊對齊的按鈕區塊 -->
+        <div style="display: flex; flex-direction: column; gap: 0.6rem; margin-top: 1rem;">
+            <!-- 上方輔助列：上一題、偷看答案、熟記跳過 -->
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <button class="btn btn-secondary" id="btn-prev" style="flex: 1;">⬅️ 上一題</button>
+                <button class="btn btn-skip hidden" id="btn-skip" style="flex: 1;">⏭️ 熟記跳過</button>
+                <button class="btn-peek hidden" id="btn-peek-answer" type="button" title="偷看正確答案">
+                    👀 偷看答案
+                </button>
+            </div>
+            <!-- 下方主要動作列：提交答案 / 下一題 (滿版大按鈕) -->
+            <div>
+                <button class="btn" id="btn-submit" style="width: 100%;">提交答案</button>
+                <button class="btn btn-success hidden" id="btn-next" style="width: 100%;">下一題 ➡️</button>
+            </div>
+        </div>
+
+        <!-- 偷看答案顯示面板 -->
+        <div id="quiz-peek-display" class="peek-box hidden">
+            <div class="peek-title">🤫 標準答案預覽：</div>
+            <div class="peek-content" id="peek-text-content"></div>
         </div>
 
         <div id="quiz-feedback" class="feedback hidden"></div>
     </div>
 
-    <!-- 🎴 智慧字卡背誦畫面 (具備 SRS 智慧演算法) -->
+    <!-- 🎴 智慧字卡背誦畫面 (具備真實 SRS 間距重複演算法) -->
     <div id="view-flashcard" class="hidden">
         <div class="quiz-topbar">
             <select id="select-card-scope" style="width:auto; padding:0.3rem 0.6rem; font-size:0.85rem; font-weight:700; border-radius:20px; border-color:#c7d2fe; background:var(--primary-light); color:var(--primary); outline:none; cursor:pointer;" onchange="changeCardScope(this.value)">
                 <option value="unmastered" selected>📚 僅未熟記題庫</option>
                 <option value="all">🌐 全部總題庫 (90題)</option>
-                <option value="srs-smart" style="color:#b45309; font-weight:bold;">🧠 SRS 智慧演算法複習（自動優先複習錯題）</option>
+                <option value="srs-smart" style="color:#b45309; font-weight:bold;">🧠 SRS 智慧演算法複習（優先複習待加強錯題）</option>
                 <option value="easy">🟢 僅「易」題 (36題)</option>
                 <option value="mid">🟡 僅「中」題 (36題)</option>
                 <option value="hard">🔴 僅「難」題 (18題)</option>
@@ -581,8 +642,8 @@ const RAW_QUESTIONS = [
     { id: 25, diff: "easy", q: "依官兵薪餉自由選擇薪資存款業務金融機構計有哪4家？", a: "(1)郵局。(2)土地銀行。(3)合作金庫銀行。(4)台新銀行。" },
     { id: 26, diff: "easy", q: "依國軍各單位預算簿籍憑證保管期限參照表，本島各機關學校憑證自總決算公布日起，保存幾年？", a: "2年。" },
     { id: 27, diff: "easy", q: "何謂主計人員？", a: "辦理單位主辦主計（會計）人員及所屬承辦主計事務人員謂之。" },
-    { id: 28, diff: "easy", q: "依國軍各級單位現金會計作業規定第30條，有關業務部門簽借墊借款應預定歸還期限，無論預算是否獲得，應於取得單據或任務結束後多少日內辦理核銷歸墊？", a: "30日內。" },
-    { id: 29, diff: "easy", q: "依國軍各級單位現金會計作業規定第32條第6項，伙食團於何種情況下須歸還副食週轉金？", a: "年度結束時歸還。" },
+    { id: 28, diff: "easy", q: "依國軍各單位現金會計作業規定第30條，有關業務部門簽借墊借款應預定歸還期限，無論預算是否獲得，應於取得單據或任務結束後多少日內辦理核銷歸墊？", a: "30日內。" },
+    { id: 29, diff: "easy", q: "依國軍各單位現金會計作業規定第32條第6項，伙食團於何種情況下須歸還副食週轉金？", a: "年度結束時歸還。" },
     { id: 30, diff: "easy", q: "依採購契約要項第45條，機關於採購契約規定逾期違約金，其上限為契約金總額之多少？", a: "百分之20。" },
     { id: 31, diff: "easy", q: "依國防部及所屬各機關（構）獎金核發作業規定劃分，中校核給個人獎金上限為多少？", a: "1,000元。" },
     { id: 32, diff: "easy", q: "依預算法第83條，獨立於總預算外之預算個體為何？", a: "特別預算。" },
@@ -639,7 +700,7 @@ const RAW_QUESTIONS = [
     { id: 83, diff: "hard", q: "各單位所取據之紙本電子發票，倘顯無法長時間保存者，應如何處理？", a: "無須影印發票，亦無須於發票或申請動支經費文件內註記發票字軌號碼，日後若有查考實需可至財政部相關頁面搜尋印製。" },
     { id: 84, diff: "hard", q: "依國軍單位國庫機關專戶異常通報機制作業規定第4點，通報事項異常情形？應即時掌握回報，防杜財務違失情事？", a: "(1)攜帶印鑑章於臨櫃辦理提款。(2)單位於臨櫃要求確認印鑑章。(3)與原留印鑑章不符。(4)提款時存款餘額不足。(5)以掛失支票辦理領款。(6)其他。" },
     { id: 85, diff: "hard", q: "經管財務人員交接事項內容應包含哪些？", a: "(1)會計業務：經管之現金收支登記簿、各帳戶餘額明細資料、會計檔案、會計業務用品、會計法令規章、會計類待辦事項及其他有關會計業務應交代事項等。(2)出納業務：經管各項現金、票據、銀行存款等及銀行存款調節表、各項原始憑證及支票、領款收據（存根）、出納業務用品、出納法令規章、出納類待辦事項及其他有關出納業務應交代事項等。" },
-    { id: 86, diff: "hard", q: "交接程序應由何人完成？但何種情況下可由單位主官指派適合人員代為辦理？", a: "(1)應由當事人親自完成。(2)因病卸任、在任病故、或逃匿，未委託代辦交代之人，或已委託代辦交代之人而未按時辦理交代事宜者，由其最高佐理人員代辦交代。" },
+    { id: 86, diff: "hard", q: "交接程序應由何人完成？但何種情況下可由單位主官指派適合人員代為辦理？", a: "(1)應由當事人親自完成。(2)因病卸任、在任病故、或逃匿，未委託代辦交代之人，或已委託代辦交代之人而未按時辦理交代事宜者，-由其最高佐理人員代辦交代。" },
     { id: 87, diff: "hard", q: "基層單位主官及預財士辦理移交時，監交人分別為何？", a: "(1)各基層單位主官，其監交人員為上級單位主官（或其代表）及主計單位主管（或其代表）。(2)各基層單位預財士，其監交人員為單位主官（或其代表）及主計單位主管（或其代表）。" },
     { id: 88, diff: "hard", q: "依各級單位對經管財務行政事項人員實施內部控制之自我檢查作業要點，其範圍為何？", a: "(1)預算執行。(2)會計處理。(3)現金收支。(4)財產保管。(5)採購及處分財務。(6)領回轉發案件（含營外欠款情形）。(7)補助費跨機關通報案件。(8)主計部門財務輔檢督導情形。(9)臨時交辦及其他重要事項。" },
     { id: 89, diff: "hard", q: "單位接獲通知受領勞軍款應行注意事項為何？試述之？", a: "(1)勞軍款是否透過軍人之友社或各地服務站辦理。(2)依受領金額開立收領款收據。(3)收到勞軍款當日，即應依「國軍各級單位現金會計作業規定」登錄於「勞軍款」科目內列管。" },
@@ -648,14 +709,16 @@ const RAW_QUESTIONS = [
 
 let masteredSet = new Set();
 let wrongStats = {};
+let srsProgress = {}; 
 let cardLastPositions = {};
 let streakData = { days: 0, lastDate: "" };
 
 try {
-    masteredSet = new Set(JSON.parse(localStorage.getItem('mastered_questions_stage2') || '[]'));
-    wrongStats = JSON.parse(localStorage.getItem('wrong_stats_stage2') || '{}');
-    cardLastPositions = JSON.parse(localStorage.getItem('card_last_positions_stage2') || '{}');
-    streakData = JSON.parse(localStorage.getItem('study_streak_data_stage2') || '{"days":0, "lastDate":""}');
+    masteredSet = new Set(JSON.parse(localStorage.getItem('mastered_questions_nco_general') || '[]'));
+    wrongStats = JSON.parse(localStorage.getItem('wrong_stats_nco_general') || '{}');
+    srsProgress = JSON.parse(localStorage.getItem('srs_progress_nco_general') || '{}');
+    cardLastPositions = JSON.parse(localStorage.getItem('card_last_positions_nco_general') || '{}');
+    streakData = JSON.parse(localStorage.getItem('study_streak_data_nco') || '{"days":0, "lastDate":""}');
 } catch (e) {
     localStorage.clear();
 }
@@ -681,7 +744,7 @@ function updateStudyStreak() {
         }
     }
     try {
-        localStorage.setItem('study_streak_data_stage2', JSON.stringify(streakData));
+        localStorage.setItem('study_streak_data_nco', JSON.stringify(streakData));
     } catch (e) {}
 }
 
@@ -708,9 +771,10 @@ let suppressClickUntil = 0;
 
 function saveAllData() {
     try {
-        localStorage.setItem('mastered_questions_stage2', JSON.stringify([...masteredSet]));
-        localStorage.setItem('wrong_stats_stage2', JSON.stringify(wrongStats));
-        localStorage.setItem('card_last_positions_stage2', JSON.stringify(cardLastPositions));
+        localStorage.setItem('mastered_questions_nco_general', JSON.stringify([...masteredSet]));
+        localStorage.setItem('wrong_stats_nco_general', JSON.stringify(wrongStats));
+        localStorage.setItem('srs_progress_nco_general', JSON.stringify(srsProgress));
+        localStorage.setItem('card_last_positions_nco_general', JSON.stringify(cardLastPositions));
         renderDashboard();
     } catch (e) {}
 }
@@ -742,10 +806,10 @@ function renderDashboard() {
 
 function toggleDarkMode() {
     document.body.classList.toggle('dark-mode');
-    localStorage.setItem('dark_mode_enabled_stage2', document.body.classList.contains('dark-mode'));
+    localStorage.setItem('dark_mode_enabled_nco', document.body.classList.contains('dark-mode'));
 }
 
-if (localStorage.getItem('dark_mode_enabled_stage2') === 'true') {
+if (localStorage.getItem('dark_mode_enabled_nco') === 'true') {
     document.body.classList.add('dark-mode');
 }
 
@@ -826,7 +890,7 @@ function escapeHtml(str) {
     return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-/* ✍️ 打字測驗邏輯（支援暫停與繼續進度） */
+/* ✍️ 打字測驗邏輯 */
 function startQuiz() {
     activeMatchRule = document.getElementById('select-match-rule').value;
     const selected = getSelectedPool();
@@ -849,17 +913,17 @@ function startQuiz() {
 
 function saveQuizSession() {
     if (!isQuizActive) {
-        localStorage.removeItem('quiz_session_stage2');
+        localStorage.removeItem('quiz_session_nco_general');
         renderPauseBanner();
         return;
     }
     const session = { quizList, userAnswers, currentIndex, activeMatchRule };
-    localStorage.setItem('quiz_session_stage2', JSON.stringify(session));
+    localStorage.setItem('quiz_session_nco_general', JSON.stringify(session));
     renderPauseBanner();
 }
 
 function renderPauseBanner() {
-    const raw = localStorage.getItem('quiz_session_stage2');
+    const raw = localStorage.getItem('quiz_session_nco_general');
     const banner = document.getElementById('panel-paused-quiz');
     if (!banner) return;
     if (raw) {
@@ -876,7 +940,7 @@ function renderPauseBanner() {
 }
 
 function resumeQuiz() {
-    const raw = localStorage.getItem('quiz_session_stage2');
+    const raw = localStorage.getItem('quiz_session_nco_general');
     if (!raw) return;
     try {
         const session = JSON.parse(raw);
@@ -894,7 +958,7 @@ function resumeQuiz() {
 
         showQuestion();
     } catch(e) {
-        localStorage.removeItem('quiz_session_stage2');
+        localStorage.removeItem('quiz_session_nco_general');
         renderPauseBanner();
     }
 }
@@ -902,7 +966,7 @@ function resumeQuiz() {
 function discardQuiz() {
     if (confirm("確定要放棄目前的測驗進度嗎？")) {
         isQuizActive = false;
-        localStorage.removeItem('quiz_session_stage2');
+        localStorage.removeItem('quiz_session_nco_general');
         renderPauseBanner();
     }
 }
@@ -929,15 +993,20 @@ function showQuestion() {
     if (chkMastered) chkMastered.checked = isMastered;
 
     const skipBtn = document.getElementById('btn-skip');
+    const peekBtn = document.getElementById('btn-peek-answer');
+    const peekDisplay = document.getElementById('quiz-peek-display');
     const ansArea = document.getElementById('quiz-answer');
     const submitBtn = document.getElementById('btn-submit');
     const nextBtn = document.getElementById('btn-next');
     const feedback = document.getElementById('quiz-feedback');
 
+    if (peekDisplay) peekDisplay.classList.add('hidden');
+
     if (record && record.isSubmitted) {
         ansArea.value = record.userAnswer || '';
         ansArea.disabled = true;
         if (submitBtn) submitBtn.classList.add('hidden');
+        if (peekBtn) peekBtn.classList.add('hidden');
         if (skipBtn) skipBtn.classList.add('hidden');
         if (nextBtn) nextBtn.classList.remove('hidden');
         if (feedback) {
@@ -952,6 +1021,11 @@ function showQuestion() {
         if (nextBtn) nextBtn.classList.add('hidden');
         if (feedback) feedback.className = 'feedback hidden';
         
+        if (peekBtn) {
+            if (isMastered) peekBtn.classList.remove('hidden');
+            else peekBtn.classList.add('hidden');
+        }
+
         if (skipBtn) {
             if (isMastered) skipBtn.classList.remove('hidden');
             else skipBtn.classList.add('hidden');
@@ -961,17 +1035,90 @@ function showQuestion() {
     saveQuizSession();
 }
 
+function toggleMastered(checked) {
+    const item = quizList[currentIndex];
+    if (checked) {
+        masteredSet.add(item.id);
+    } else {
+        masteredSet.delete(item.id);
+    }
+    saveAllData();
+
+    const peekBtn = document.getElementById('btn-peek-answer');
+    const peekDisplay = document.getElementById('quiz-peek-display');
+    const record = userAnswers[currentIndex];
+    
+    if (peekBtn && (!record || !record.isSubmitted)) {
+        if (checked) peekBtn.classList.remove('hidden');
+        else {
+            peekBtn.classList.add('hidden');
+            if (peekDisplay) peekDisplay.classList.add('hidden');
+        }
+    }
+}
+
+function togglePeekAnswer() {
+    const item = quizList[currentIndex];
+    const peekDisplay = document.getElementById('quiz-peek-display');
+    const peekText = document.getElementById('peek-text-content');
+    if (!peekDisplay || !peekText) return;
+
+    if (peekDisplay.classList.contains('hidden')) {
+        peekText.textContent = item.a;
+        peekDisplay.classList.remove('hidden');
+    } else {
+        peekDisplay.classList.add('hidden');
+    }
+}
+
 function submitAnswer() {
     const rawU = document.getElementById('quiz-answer').value;
     const item = quizList[currentIndex];
     const rawS = item.a;
     const feedback = document.getElementById('quiz-feedback');
+    const peekDisplay = document.getElementById('quiz-peek-display');
     
-    const cleanU = rawU.replace(/[\d０-９]+[\.．、]/g, '').replace(/[（）()、，。；：\s]/g, '');
-    const cleanS = rawS.replace(/[\d０-９]+[\.．、]/g, '').replace(/[（）()、，。；：\s]/g, '');
-    let isCorrect = cleanS.includes(cleanU) && cleanU.length >= 2;
+    if (peekDisplay) peekDisplay.classList.add('hidden');
+
+    let isCorrect = false;
+
     if (activeMatchRule === 'exact') {
         isCorrect = (rawU.trim() === rawS.trim());
+    } else {
+        const parsePoints = (text) => {
+            let parts = text.split(/(?=\(\d+\))/g);
+            if (parts.length <= 1) {
+                parts = text.split(/[\n;；]+/);
+            }
+            return parts.map(p => p.replace(/[\d０-９]+\s*[\.．、：:]?/g, '').replace(/[（）()v、，。；：\s]/g, '')).filter(p => p.length >= 2);
+        };
+
+        const standardPoints = parsePoints(rawS);
+        const userCleanFull = rawU.replace(/[\d０-９]+[\.．、]/g, '').replace(/[（）()v、，。；：\s]/g, '');
+
+        if (standardPoints.length === 0) {
+            const cleanS = rawS.replace(/[\d０-９]+[\.．、]/g, '').replace(/[（）()v、，。；：\s]/g, '');
+            isCorrect = (userCleanFull.length >= 2 && cleanS.includes(userCleanFull));
+        } else {
+            let matchedCount = 0;
+            standardPoints.forEach(sp => {
+                if (userCleanFull.includes(sp) || (sp.length > 3 && userCleanFull.includes(sp.substring(0, Math.floor(sp.length * 0.7))))) {
+                    matchedCount++;
+                } else {
+                    let subMatch = false;
+                    for (let i = 0; i < sp.length - 1; i++) {
+                        let chunk = sp.substr(i, 3);
+                        if (userCleanFull.includes(chunk)) {
+                            subMatch = true;
+                            break;
+                        }
+                    }
+                    if (subMatch) matchedCount++;
+                }
+            });
+            const threshold = standardPoints.length <= 2 ? standardPoints.length : Math.ceil(standardPoints.length * 0.7);
+            isCorrect = (matchedCount >= threshold);
+        }
     }
 
     if (!isCorrect) {
@@ -1000,6 +1147,8 @@ function submitAnswer() {
     }
     document.getElementById('quiz-answer').disabled = true;
     document.getElementById('btn-submit').classList.add('hidden');
+    const peekBtn = document.getElementById('btn-peek-answer');
+    if (peekBtn) peekBtn.classList.add('hidden');
     document.getElementById('btn-next').classList.remove('hidden');
     saveQuizSession();
 }
@@ -1021,7 +1170,7 @@ function nextQuestion() {
 
 function showResult() {
     isQuizActive = false;
-    localStorage.removeItem('quiz_session_stage2');
+    localStorage.removeItem('quiz_session_nco_general');
     renderPauseBanner();
 
     document.getElementById('view-quiz').classList.add('hidden');
@@ -1040,7 +1189,7 @@ function showResult() {
     document.getElementById('res-detail').innerHTML = `實際作答 <strong>${actualAttempts}</strong> 題 ｜ 答對 <strong>${correctCount}</strong> 題`;
 }
 
-/* 🎴 智慧字卡系統（具備 SRS 智慧演算法） */
+/* 🎴 智慧字卡系統 */
 let currentFrontText = "";
 let currentBackText = "";
 
@@ -1058,15 +1207,22 @@ function openFlashcardSetup() {
 function changeCardScope(scope) {
     currentCardScope = scope;
     let pool = [];
+    const now = Date.now();
+
     if (scope === 'all') pool = [...RAW_QUESTIONS];
     else if (scope === 'unmastered') pool = RAW_QUESTIONS.filter(q => !masteredSet.has(q.id));
     else if (scope === 'srs-smart') {
         pool = [...RAW_QUESTIONS].sort((a, b) => {
+            const srsA = srsProgress[a.id] || { interval: 0, dueDate: 0, reps: 0 };
+            const srsB = srsProgress[b.id] || { interval: 0, dueDate: 0, reps: 0 };
             const errA = wrongStats[a.id] || 0;
             const errB = wrongStats[b.id] || 0;
-            const matA = masteredSet.has(a.id) ? 1 : 0;
-            const matB = masteredSet.has(b.id) ? 1 : 0;
-            if (matA !== matB) return matA - matB;
+
+            const dueA = (srsA.dueDate <= now) ? 1 : 0;
+            const dueB = (srsB.dueDate <= now) ? 1 : 0;
+            if (dueA !== dueB) return dueB - dueA;
+
+            if (srsA.reps !== srsB.reps) return srsA.reps - srsB.reps;
             return errB - errA;
         });
     }
@@ -1090,18 +1246,15 @@ function changeCardScope(scope) {
 function restartFlashcards() {
     cardIndex = 0;
     cardLastPositions[currentCardScope] = 0;
-    localStorage.setItem('card_last_positions_stage2', JSON.stringify(cardLastPositions));
+    localStorage.setItem('card_last_positions_nco_general', JSON.stringify(cardLastPositions));
     renderCardContent();
 }
 
 function renderCardContent() {
     if (cardList.length === 0) return;
     const item = cardList[cardIndex];
-    isCardFlipped = false;
     
-    cardLastPositions[currentCardScope] = cardIndex;
-    localStorage.setItem('card_last_positions_stage2', JSON.stringify(cardLastPositions));
-
+    isCardFlipped = false;
     const card = document.getElementById('flashcard-card');
     const inner = document.getElementById('flashcard-inner');
     if (card) {
@@ -1110,53 +1263,14 @@ function renderCardContent() {
         card.style.opacity = '1';
     }
     if (inner) inner.classList.remove('is-flipped');
-    const srs = document.getElementById('srs-box');
-    if (srs) srs.classList.add('hidden');
+    const srsBox = document.getElementById('srs-box');
+    if (srsBox) srsBox.classList.add('hidden');
+
+    cardLastPositions[currentCardScope] = cardIndex;
+    localStorage.setItem('card_last_positions_nco_general', JSON.stringify(cardLastPositions));
 
     const prog = document.getElementById('card-progress');
     if (prog) prog.textContent = `📝 題目 (${cardIndex + 1}/${cardList.length}) (#${item.id})`;
-
-    if (isReverseMode) {
-        currentFrontText = item.a;
-        currentBackText = item.q;
-        document.getElementById('card-front-body').textContent = item.a;
-        document.getElementById('card-back-body').textContent = item.q;
-        document.getElementById('card-back-title').textContent = "💡 回想原題目";
-    } else {
-        currentFrontText = item.q;
-        currentBackText = item.a;
-        document.getElementById('card-front-body').textContent = item.q;
-        document.getElementById('card-back-body').textContent = item.a;
-        document.getElementById('card-back-title').textContent = "💡 標準答案";
-    }
-
-    const diffMap = { easy: { label: "易", class: "diff-tag-easy" }, mid: { label: "中", class: "diff-tag-mid" }, hard: { label: "難", class: "diff-tag-hard" } };
-    const tag = document.getElementById('card-diff-tag');
-    if (tag) {
-        tag.className = `diff-tag ${diffMap[item.diff].class}`;
-        tag.textContent = `${diffMap[item.diff].label} #${item.id}`;
-    }
-
-    const chk = document.getElementById('chk-card-mastered');
-    if (chk) chk.checked = masteredSet.has(item.id);
-    
-    const prevBtn = document.getElementById('btn-card-prev');
-    if (prevBtn) prevBtn.disabled = (cardIndex === 0);
-}
-
-function renderCardContentWithoutReset() {
-    if (cardList.length === 0) return;
-    const item = cardList[cardIndex];
-    isCardFlipped = false;
-    
-    cardLastPositions[currentCardScope] = cardIndex;
-    localStorage.setItem('card_last_positions_stage2', JSON.stringify(cardLastPositions));
-
-    const inner = document.getElementById('flashcard-inner');
-    if (inner) inner.classList.remove('is-flipped');
-
-    document.getElementById('srs-box').classList.add('hidden');
-    document.getElementById('card-progress').textContent = `📝 題目 (${cardIndex + 1}/${cardList.length}) (#${item.id})`;
 
     if (isReverseMode) {
         currentFrontText = item.a;
@@ -1203,14 +1317,32 @@ function flipCard() {
     }
 }
 
-function rateCard(level) {
+function rateCard(rating) {
     const item = cardList[cardIndex];
-    if (level === 'hard') {
+    const now = Date.now();
+    
+    if (!srsProgress[item.id]) {
+        srsProgress[item.id] = { interval: 1, dueDate: now, reps: 0 };
+    }
+    const srs = srsProgress[item.id];
+
+    if (rating === 'hard') {
+        srs.interval = 1;
+        srs.dueDate = now + (1 * 60 * 1000);
+        srs.reps = 0;
         wrongStats[item.id] = (wrongStats[item.id] || 0) + 1;
         masteredSet.delete(item.id);
-    } else if (level === 'easy') {
+    } else if (rating === 'mid') {
+        srs.interval = Math.max(1, Math.round(srs.interval * 1.5));
+        srs.dueDate = now + (srs.interval * 24 * 60 * 60 * 1000);
+        srs.reps += 1;
+    } else if (rating === 'easy') {
+        srs.interval = Math.max(3, srs.interval * 3);
+        srs.dueDate = now + (srs.interval * 24 * 60 * 60 * 1000);
+        srs.reps += 2;
         masteredSet.add(item.id);
     }
+
     saveAllData();
     nextCard();
 }
@@ -1226,7 +1358,7 @@ function animateSlideTo(direction, targetIndex) {
 
     setTimeout(() => {
         cardIndex = targetIndex;
-        renderCardContentWithoutReset();
+        renderCardContent();
 
         const flyInStartX = (direction === 'left') ? window.innerWidth * 1.2 : -window.innerWidth * 1.2;
         card.style.transition = 'none';
@@ -1245,7 +1377,6 @@ function animateSlideTo(direction, targetIndex) {
 
 function nextCard() {
     if (cardIndex < cardList.length - 1) {
-        document.getElementById('srs-box').classList.add('hidden');
         animateSlideTo('left', cardIndex + 1);
     } else {
         alert("🎉 本題庫字卡已全部背誦完畢！");
@@ -1255,7 +1386,6 @@ function nextCard() {
 
 function prevCard() {
     if (cardIndex > 0) {
-        document.getElementById('srs-box').classList.add('hidden');
         animateSlideTo('right', cardIndex - 1);
     }
 }
@@ -1299,7 +1429,6 @@ function speakText(text) {
     }
 }
 
-/* 👆 字卡區域互動 */
 const cardEl = document.getElementById('flashcard-card');
 let isDragging = false, startX = 0, startY = 0, currentX = 0, currentY = 0, isMoved = false;
 
@@ -1326,7 +1455,6 @@ if (cardEl) {
         const deltaX = currentX - startX;
         if (Math.abs(deltaX) > 75) {
             suppressClickUntil = Date.now() + 350;
-            document.getElementById('srs-box').classList.add('hidden');
             if (deltaX < 0 && cardIndex < cardList.length - 1) {
                 animateSlideTo('left', cardIndex + 1);
             } else if (deltaX > 0 && cardIndex > 0) {
@@ -1366,7 +1494,6 @@ function springBack() {
     cardEl.style.opacity = '1';
 }
 
-/* 📖 總題庫瀏覽 */
 function showMasteredList() {
     document.getElementById('view-setup').classList.add('hidden');
     document.getElementById('view-mastered').classList.remove('hidden');
@@ -1389,6 +1516,18 @@ function switchBankFilter(filter) {
 function renderMasteredList() {
     const container = document.getElementById('mastered-list-container');
     if (!container) return;
+
+    const totalCount = RAW_QUESTIONS.length;
+    const masteredCount = RAW_QUESTIONS.filter(q => masteredSet.has(q.id)).length;
+    const unmasteredCount = totalCount - masteredCount;
+
+    const elAll = document.getElementById('count-bank-all');
+    const elUnm = document.getElementById('count-bank-unmastered');
+    const elMas = document.getElementById('count-bank-mastered');
+    if (elAll) elAll.textContent = totalCount;
+    if (elUnm) elUnm.textContent = unmasteredCount;
+    if (elMas) elMas.textContent = masteredCount;
+
     let displayList = RAW_QUESTIONS;
     if (currentBankFilter === 'mastered') displayList = RAW_QUESTIONS.filter(q => masteredSet.has(q.id));
     else if (currentBankFilter === 'unmastered') displayList = RAW_QUESTIONS.filter(q => !masteredSet.has(q.id));
@@ -1423,7 +1562,6 @@ function toggleMasteredFromBank(qId, isChecked) {
     renderMasteredList();
 }
 
-/* 🔗 事件綁定 */
 document.addEventListener('DOMContentLoaded', () => {
     renderDashboard();
     renderStreakBadge();
@@ -1440,6 +1578,7 @@ document.addEventListener('DOMContentLoaded', () => {
     bindClick('btn-show-mastered', showMasteredList);
     bindClick('btn-hide-mastered', hideMasteredList);
     bindClick('btn-submit', submitAnswer);
+    bindClick('btn-peek-answer', togglePeekAnswer);
     bindClick('btn-next', nextQuestion);
     bindClick('btn-prev', () => { if (currentIndex > 0) { currentIndex--; showQuestion(); } });
     bindClick('btn-skip', () => { nextQuestion(); });
@@ -1452,7 +1591,7 @@ document.addEventListener('DOMContentLoaded', () => {
     bindClick('btn-autoplay', toggleAutoPlay);
     
     bindClick('srs-easy', () => rateCard('easy'));
-    bindClick('srs-mid', () => nextCard());
+    bindClick('srs-mid', () => rateCard('mid'));
     bindClick('srs-hard', () => rateCard('hard'));
 
     bindClick('btn-speak-front', () => speakText(currentFrontText));
@@ -1471,17 +1610,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     bindClick('btn-show-backup', () => {
-        const data = { mastered: [...masteredSet], wrong: wrongStats };
+        const data = { mastered: [...masteredSet], wrong: wrongStats, srs: srsProgress };
         const txt = document.getElementById('txt-backup');
         if (txt) txt.value = btoa(encodeURIComponent(JSON.stringify(data)));
         document.getElementById('modal-backup')?.classList.remove('hidden');
     });
     bindClick('btn-close-backup', () => document.getElementById('modal-backup')?.classList.add('hidden'));
     bindClick('btn-reset-data', () => {
-        if (confirm("確定要重設所有已熟記標記與錯題嗎？")) {
+        if (confirm("確定要重設所有已熟記標記與 SRS 學習進度嗎？")) {
             masteredSet.clear();
             wrongStats = {};
-            localStorage.removeItem('quiz_session_stage2');
+            srsProgress = {};
+            localStorage.removeItem('quiz_session_nco_general');
             saveAllData();
             renderDashboard();
             renderPauseBanner();
