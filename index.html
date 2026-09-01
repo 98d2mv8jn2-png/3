@@ -127,7 +127,7 @@
         .btn-purple { background-color: var(--purple); color: #fff; }
         .btn-danger { background-color: var(--danger); color: #fff; }
         
-        /* 重新設計的精緻偷看按鈕：水平並排、大小適中 */
+        /* 偷看按鈕：水平並排、大小適中 */
         .btn-peek {
             background-color: #fef3c7;
             color: #b45309;
@@ -179,7 +179,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
+            margin-bottom: 1.0rem;
             flex-wrap: wrap;
             gap: 0.5rem;
         }
@@ -700,7 +700,7 @@ const RAW_QUESTIONS = [
     { id: 83, diff: "hard", q: "各單位所取據之紙本電子發票，倘顯無法長時間保存者，應如何處理？", a: "無須影印發票，亦無須於發票或申請動支經費文件內註記發票字軌號碼，日後若有查考實需可至財政部相關頁面搜尋印製。" },
     { id: 84, diff: "hard", q: "依國軍單位國庫機關專戶異常通報機制作業規定第4點，通報事項異常情形？應即時掌握回報，防杜財務違失情事？", a: "(1)攜帶印鑑章於臨櫃辦理提款。(2)單位於臨櫃要求確認印鑑章。(3)與原留印鑑章不符。(4)提款時存款餘額不足。(5)以掛失支票辦理領款。(6)其他。" },
     { id: 85, diff: "hard", q: "經管財務人員交接事項內容應包含哪些？", a: "(1)會計業務：經管之現金收支登記簿、各帳戶餘額明細資料、會計檔案、會計業務用品、會計法令規章、會計類待辦事項及其他有關會計業務應交代事項等。(2)出納業務：經管各項現金、票據、銀行存款等及銀行存款調節表、各項原始憑證及支票、領款收據（存根）、出納業務用品、出納法令規章、出納類待辦事項及其他有關出納業務應交代事項等。" },
-    { id: 86, diff: "hard", q: "交接程序應由何人完成？但何種情況下可由單位主官指派適合人員代為辦理？", a: "(1)應由當事人親自完成。(2)因病卸任、在任病故、或逃匿，未委託代辦交代之人，或已委託代辦交代之人而未按時辦理交代事宜者，-由其最高佐理人員代辦交代。" },
+    { id: 86, diff: "hard", q: "交接程序應由何人完成？但何種情況下可由單位主官指派適合人員代為辦理？", a: "(1)應由當事人親自完成。(2)因病卸任、在任病故、或逃匿，未委託代辦交代之人，或已委託代辦交代之人而未按時辦理交代事宜者，由其最高佐理人員代辦交代。" },
     { id: 87, diff: "hard", q: "基層單位主官及預財士辦理移交時，監交人分別為何？", a: "(1)各基層單位主官，其監交人員為上級單位主官（或其代表）及主計單位主管（或其代表）。(2)各基層單位預財士，其監交人員為單位主官（或其代表）及主計單位主管（或其代表）。" },
     { id: 88, diff: "hard", q: "依各級單位對經管財務行政事項人員實施內部控制之自我檢查作業要點，其範圍為何？", a: "(1)預算執行。(2)會計處理。(3)現金收支。(4)財產保管。(5)採購及處分財務。(6)領回轉發案件（含營外欠款情形）。(7)補助費跨機關通報案件。(8)主計部門財務輔檢督導情形。(9)臨時交辦及其他重要事項。" },
     { id: 89, diff: "hard", q: "單位接獲通知受領勞軍款應行注意事項為何？試述之？", a: "(1)勞軍款是否透過軍人之友社或各地服務站辦理。(2)依受領金額開立收領款收據。(3)收到勞軍款當日，即應依「國軍各級單位現金會計作業規定」登錄於「勞軍款」科目內列管。" },
@@ -714,11 +714,11 @@ let cardLastPositions = {};
 let streakData = { days: 0, lastDate: "" };
 
 try {
-    masteredSet = new Set(JSON.parse(localStorage.getItem('mastered_questions_nco_general') || '[]'));
-    wrongStats = JSON.parse(localStorage.getItem('wrong_stats_nco_general') || '{}');
-    srsProgress = JSON.parse(localStorage.getItem('srs_progress_nco_general') || '{}');
-    cardLastPositions = JSON.parse(localStorage.getItem('card_last_positions_nco_general') || '{}');
-    streakData = JSON.parse(localStorage.getItem('study_streak_data_nco') || '{"days":0, "lastDate":""}');
+    masteredSet = new Set(JSON.parse(localStorage.getItem('mastered_questions_nco_general_2') || '[]'));
+    wrongStats = JSON.parse(localStorage.getItem('wrong_stats_nco_general_2') || '{}');
+    srsProgress = JSON.parse(localStorage.getItem('srs_progress_nco_general_2') || '{}');
+    cardLastPositions = JSON.parse(localStorage.getItem('card_last_positions_nco_general_2') || '{}');
+    streakData = JSON.parse(localStorage.getItem('study_streak_data_nco_2') || '{"days":0, "lastDate":""}');
 } catch (e) {
     localStorage.clear();
 }
@@ -744,7 +744,7 @@ function updateStudyStreak() {
         }
     }
     try {
-        localStorage.setItem('study_streak_data_nco', JSON.stringify(streakData));
+        localStorage.setItem('study_streak_data_nco_2', JSON.stringify(streakData));
     } catch (e) {}
 }
 
@@ -771,10 +771,10 @@ let suppressClickUntil = 0;
 
 function saveAllData() {
     try {
-        localStorage.setItem('mastered_questions_nco_general', JSON.stringify([...masteredSet]));
-        localStorage.setItem('wrong_stats_nco_general', JSON.stringify(wrongStats));
-        localStorage.setItem('srs_progress_nco_general', JSON.stringify(srsProgress));
-        localStorage.setItem('card_last_positions_nco_general', JSON.stringify(cardLastPositions));
+        localStorage.setItem('mastered_questions_nco_general_2', JSON.stringify([...masteredSet]));
+        localStorage.setItem('wrong_stats_nco_general_2', JSON.stringify(wrongStats));
+        localStorage.setItem('srs_progress_nco_general_2', JSON.stringify(srsProgress));
+        localStorage.setItem('card_last_positions_nco_general_2', JSON.stringify(cardLastPositions));
         renderDashboard();
     } catch (e) {}
 }
@@ -806,10 +806,10 @@ function renderDashboard() {
 
 function toggleDarkMode() {
     document.body.classList.toggle('dark-mode');
-    localStorage.setItem('dark_mode_enabled_nco', document.body.classList.contains('dark-mode'));
+    localStorage.setItem('dark_mode_enabled_nco_2', document.body.classList.contains('dark-mode'));
 }
 
-if (localStorage.getItem('dark_mode_enabled_nco') === 'true') {
+if (localStorage.getItem('dark_mode_enabled_nco_2') === 'true') {
     document.body.classList.add('dark-mode');
 }
 
@@ -913,17 +913,17 @@ function startQuiz() {
 
 function saveQuizSession() {
     if (!isQuizActive) {
-        localStorage.removeItem('quiz_session_nco_general');
+        localStorage.removeItem('quiz_session_nco_general_2');
         renderPauseBanner();
         return;
     }
     const session = { quizList, userAnswers, currentIndex, activeMatchRule };
-    localStorage.setItem('quiz_session_nco_general', JSON.stringify(session));
+    localStorage.setItem('quiz_session_nco_general_2', JSON.stringify(session));
     renderPauseBanner();
 }
 
 function renderPauseBanner() {
-    const raw = localStorage.getItem('quiz_session_nco_general');
+    const raw = localStorage.getItem('quiz_session_nco_general_2');
     const banner = document.getElementById('panel-paused-quiz');
     if (!banner) return;
     if (raw) {
@@ -940,7 +940,7 @@ function renderPauseBanner() {
 }
 
 function resumeQuiz() {
-    const raw = localStorage.getItem('quiz_session_nco_general');
+    const raw = localStorage.getItem('quiz_session_nco_general_2');
     if (!raw) return;
     try {
         const session = JSON.parse(raw);
@@ -958,7 +958,7 @@ function resumeQuiz() {
 
         showQuestion();
     } catch(e) {
-        localStorage.removeItem('quiz_session_nco_general');
+        localStorage.removeItem('quiz_session_nco_general_2');
         renderPauseBanner();
     }
 }
@@ -966,7 +966,7 @@ function resumeQuiz() {
 function discardQuiz() {
     if (confirm("確定要放棄目前的測驗進度嗎？")) {
         isQuizActive = false;
-        localStorage.removeItem('quiz_session_nco_general');
+        localStorage.removeItem('quiz_session_nco_general_2');
         renderPauseBanner();
     }
 }
@@ -1170,7 +1170,7 @@ function nextQuestion() {
 
 function showResult() {
     isQuizActive = false;
-    localStorage.removeItem('quiz_session_nco_general');
+    localStorage.removeItem('quiz_session_nco_general_2');
     renderPauseBanner();
 
     document.getElementById('view-quiz').classList.add('hidden');
@@ -1246,7 +1246,7 @@ function changeCardScope(scope) {
 function restartFlashcards() {
     cardIndex = 0;
     cardLastPositions[currentCardScope] = 0;
-    localStorage.setItem('card_last_positions_nco_general', JSON.stringify(cardLastPositions));
+    localStorage.setItem('card_last_positions_nco_general_2', JSON.stringify(cardLastPositions));
     renderCardContent();
 }
 
@@ -1267,7 +1267,7 @@ function renderCardContent() {
     if (srsBox) srsBox.classList.add('hidden');
 
     cardLastPositions[currentCardScope] = cardIndex;
-    localStorage.setItem('card_last_positions_nco_general', JSON.stringify(cardLastPositions));
+    localStorage.setItem('card_last_positions_nco_general_2', JSON.stringify(cardLastPositions));
 
     const prog = document.getElementById('card-progress');
     if (prog) prog.textContent = `📝 題目 (${cardIndex + 1}/${cardList.length}) (#${item.id})`;
@@ -1621,7 +1621,7 @@ document.addEventListener('DOMContentLoaded', () => {
             masteredSet.clear();
             wrongStats = {};
             srsProgress = {};
-            localStorage.removeItem('quiz_session_nco_general');
+            localStorage.removeItem('quiz_session_nco_general_2');
             saveAllData();
             renderDashboard();
             renderPauseBanner();
